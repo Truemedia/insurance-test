@@ -38,8 +38,9 @@ class StaffWagesExportCommand extends Command
      */
     public function handle()
     {
-        $date = '2020-05-01';
-        // $date = '2020-06-01';
+        $startDate = '2020-05-01';
+        $endDate = '2020-06-01';
+        $date = $startDate;
         // Basic pay date
         $basicPaydate = Carbon::parse($date)->endOfMonth();
         if ($basicPaydate->isWeekend()) {
@@ -53,5 +54,12 @@ class StaffWagesExportCommand extends Command
             $bonusPaydate->next('Tuesday');
         }
         $this->info( $bonusPaydate->format('Y-m-d') );
+
+        $period = CarbonPeriod::create($startDate, $endDate);
+        $file = fopen('file.csv', 'w');
+        foreach ($period as $dt) {
+            fputcsv($file, [$dt->format('Y-m-d')]);
+        }
+        fclose($file);
     }
 }
