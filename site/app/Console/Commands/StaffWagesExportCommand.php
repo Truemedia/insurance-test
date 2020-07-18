@@ -29,6 +29,8 @@ class StaffWagesExportCommand extends Command
     public function __construct()
     {
         parent::__construct();
+
+        setlocale(LC_MONETARY, 'en_GB');
     }
 
     /**
@@ -38,15 +40,18 @@ class StaffWagesExportCommand extends Command
      */
     public function handle()
     {
+        // Date range
         $startDate = '2020-05-01';
         $endDate = '2020-06-01';
         $date = $startDate;
+
         // Basic pay date
         $basicPaydate = Carbon::parse($date)->endOfMonth();
         if ($basicPaydate->isWeekend()) {
             $basicPaydate->previousWeekday();
         }
         $this->info( $basicPaydate->format('Y-m-d') );
+
         // Bonus pay date
         $bonusPaydate = Carbon::parse($date);
         $bonusPaydate->day = 10;
@@ -55,10 +60,18 @@ class StaffWagesExportCommand extends Command
         }
         $this->info( $bonusPaydate->format('Y-m-d') );
 
+        // Output CSV
         $period = CarbonPeriod::create($startDate, $endDate);
         $file = fopen('file.csv', 'w');
         foreach ($period as $dt) {
-            fputcsv($file, [$dt->format('Y-m-d')]);
+            $basicPay = 1000;
+            $bonusPay = 50;
+
+            fputcsv($file, [
+                $dt->format('F'), // Month name
+                $basicPay,
+                $bonusPay
+            ]);
         }
         fclose($file);
     }
