@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Carbon\{Carbon,CarbonPeriod};
 
 class StaffWagesExportCommand extends Command
 {
@@ -37,6 +38,20 @@ class StaffWagesExportCommand extends Command
      */
     public function handle()
     {
-        $this->info('command output');
+        $date = '2020-05-01';
+        // $date = '2020-06-01';
+        // Basic pay date
+        $basicPaydate = Carbon::parse($date)->endOfMonth();
+        if ($basicPaydate->isWeekend()) {
+            $basicPaydate->previousWeekday();
+        }
+        $this->info( $basicPaydate->format('Y-m-d') );
+        // Bonus pay date
+        $bonusPaydate = Carbon::parse($date);
+        $bonusPaydate->day = 10;
+        if ($bonusPaydate->isWeekend()) {
+            $bonusPaydate->next('Tuesday');
+        }
+        $this->info( $bonusPaydate->format('Y-m-d') );
     }
 }
