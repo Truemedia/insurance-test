@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Carbon\{Carbon,CarbonPeriod};
+use DateInterval;
 
 class StaffWagesExportCommand extends Command
 {
@@ -41,36 +42,36 @@ class StaffWagesExportCommand extends Command
     public function handle()
     {
         // Date range
-        $startDate = '2020-05-01';
-        $endDate = '2020-06-01';
-        $date = $startDate;
-
-        // Basic pay date
-        $basicPaydate = Carbon::parse($date)->endOfMonth();
-        if ($basicPaydate->isWeekend()) {
-            $basicPaydate->previousWeekday();
-        }
-        $this->info( $basicPaydate->format('Y-m-d') );
-
-        // Bonus pay date
-        $bonusPaydate = Carbon::parse($date);
-        $bonusPaydate->day = 10;
-        if ($bonusPaydate->isWeekend()) {
-            $bonusPaydate->next('Tuesday');
-        }
-        $this->info( $bonusPaydate->format('Y-m-d') );
+        $startDate = Carbon::now();
+        $endDate = $startDate->clone()->add(12, 'months');
 
         // Output CSV
-        $period = CarbonPeriod::create($startDate, $endDate);
+        $period = new CarbonPeriod($startDate, $endDate, new DateInterval('P1M'));
         $file = fopen('file.csv', 'w');
-        foreach ($period as $dt) {
+        
+        foreach ($period as $date) {
+            // Basic pay date
+            $basicPaydate = $date->clone()->endOfMonth();
+            if ($basicPaydate->isWeekend()) {
+                $basicPaydate->previousWeekday();
+            }
+            $this->info( $basicPaydate->format('Y-m-d') );
+
+            // Bonus pay date
+            $bonusPaydate = $date->clone();
+            $bonusPaydate->day = 10;
+            if ($bonusPaydate->isWeekend()) {
+                $bonusPaydate->next('Tuesday');
+            }
+            $this->info( $bonusPaydate->format('Y-m-d') );
+
             $basicPay = 1000;
             $bonusPay = 50;
 
             fputcsv($file, [
-                $dt->format('F'), // Month name
-                $basicPay,
-                $bonusPay
+                $date->format('F'), // Month name
+                $basicPay, // Basic pay
+                $bonusPay // Bonus pay
             ]);
         }
         fclose($file);
